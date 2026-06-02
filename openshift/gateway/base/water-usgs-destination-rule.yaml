@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: water-usgs
+  namespace: gateway
+spec:
+  host: water-usgs.gateway.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: SIMPLE # This forces Envoy to originate TLS (HTTPS) to the backend
+      sni: waterservices.usgs.gov # The hostname matching the external cert

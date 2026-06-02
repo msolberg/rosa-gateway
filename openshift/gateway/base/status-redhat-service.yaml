@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: status-redhat
+  namespace: gateway
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 443       # The port clients target inside the cluster
+      targetPort: 443 # The port your external servers are listening on
+  clusterIP: None    # "Headless" lets Envoy see both addresses
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: status-redhat-endpoints
+  namespace: gateway
+  labels:
+    kubernetes.io/service-name: status-redhat
+addressType: IPv4
+ports:
+  - name: https
+    protocol: TCP
+    port: 443
+endpoints:
+  - addresses: ["54.230.79.129"]
+  - addresses: ["54.230.79.21"]
+  - addresses: ["54.230.79.98"]
+  - addresses: ["54.230.79.68"]

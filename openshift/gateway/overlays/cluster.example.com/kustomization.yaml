@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Overlay for travels cluster
+# Cluster domain: cluster.example.com
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Gateway
+      name: wildcard-gateway
+    patch: |-
+      - op: replace
+        path: /spec/listeners/0/hostname
+        value: "*.gateway.apps.cluster.example.com"
+
+  - target:
+      kind: HTTPRoute
+      name: echo-route
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "echo.gateway.apps.cluster.example.com"
+
+  - target:
+      kind: HTTPRoute
+      name: status-route
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "status.gateway.apps.cluster.example.com"
+
+  - target:
+      kind: HTTPRoute
+      name: water-usgs-route
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "water-usgs.gateway.apps.cluster.example.com"

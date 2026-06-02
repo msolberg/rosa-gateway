@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: status-redhat
+  namespace: gateway
+spec:
+  host: status-redhat.gateway.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: SIMPLE # This forces Envoy to originate TLS (HTTPS) to the backend
+      sni: status.redhat.com # The hostname matching the external cert
