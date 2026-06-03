@@ -142,6 +142,7 @@ Now using project "gateway" on server "https://api.rosa-nnpw4.w2vo.p3.openshifta
 
 For testing create an example service:
 
+```
 $ oc new-app quay.io/rhdevelopers/echo-api:rhcl
 --> Found container image 3617a52 (2 years old) from quay.io for "quay.io/rhdevelopers/echo-api:rhcl"
 
@@ -212,6 +213,40 @@ Now that we've verified the Gateway API implementation on our ROSA cluster, we'l
 First we need to create a external service to proxy. We'll proxy the USGS Water Data service as a simple test:
 
 ```
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: water-usgs
+  namespace: gateway
+spec:
+  clusterIP: None
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 443
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  labels:
+    kubernetes.io/service-name: water-usgs
+  name: water-usgs-endpoints
+  namespace: gateway
+addressType: IPv4
+endpoints:
+- addresses:
+  - 137.227.241.74
+- addresses:
+  - 137.227.235.121
+- addresses:
+  - 137.227.252.8
+ports:
+- name: https
+  port: 443
+  protocol: TCP
+
 ```
 
 Note that we're creating a Service without a selector and then we're manually updating the EndpointSlices for that service. You could also use an "externalName" service type as well.
@@ -268,7 +303,7 @@ $ curl -k https://water-usgs.gateway.apps.rosa.rosa-s6j86.i54d.p3.openshiftapps.
 <!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=en class=no-js><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=description content="USGS water data provided through web services and extensible markup language (XML) using a REST protocol."><script src=/wdfn-viz/uswds-init.min.js></script><link rel=stylesheet href=/wdfn-viz/wdfnviz-all.css><meta name=generator content="Hugo 0.128.0"><link rel=alternate type=application/rss+xml href=/index.xml><link rel=alternate type=application/json href=/index.json><link rel="shortcut icon" href=/favicons/favicon.ico><title>Water Services Web</title>
 ```
 
-Let's proxy https://status.redhat.com. This site sits behind a Akamai, so we'll need to pass a host header.
+Let's proxy https://status.redhat.com. This site sits behind a load balancer, so we'll need to pass a host header.
 
 Again, create the service:
 
