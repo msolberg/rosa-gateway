@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base configuration - use overlays to set the domain
+# Default placeholder: apps.CLUSTER_DOMAIN
+
+resources:
+  # Namespace
+  - namespace.yaml
+
+  # Operator
+  - rhcl-subscription.yaml
+  - rhcl-operatorgroup.yaml
+
+  # Kuadrant Instance
+  - kuadrant.yaml

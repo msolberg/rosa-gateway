@@ -26,6 +26,10 @@ this proxy to provide centralized access to an internal service.
 
 ## Implementation
 
+### Pre-requisites
+
+* cert-manager Operator for Red Hat OpenShift [docs](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/cert-manager-operator-for-red-hat-openshift)
+
 ### GatewayClass
 
 First, create the GatewayClass object. This tells the Ingress Operator
@@ -406,4 +410,73 @@ $ curl -s -k https://status.gateway.apps.rosa.rosa-s6j86.i54d.p3.openshiftapps.c
     <title>Red Hat Status</title>
     <meta name="description" content="Welcome to Red Hat&#39;s home for real-time and historical data on system performance.">
 
+```
+
+## Red Hat Connectivity Link
+
+We'll be installing Red Hat Connectivity Link to access advanced features. For full documentation on RHCL installation, see [RHCL Install Documentation](https://docs.redhat.com/en/documentation/red_hat_connectivity_link/1.3/html/installing_connectivity_link/index)
+
+
+### Installing the Connectivity Link Operator
+
+First, create a namespace for the operator:
+
+```
+$ oc create ns kuadrant-system
+$ oc project kuadrant-system
+```
+
+Next, create the Subscription and OperatorGroup CRs for Connectivity Link:
+
+```
+oc apply -f - <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rhcl-operator
+  namespace: kuadrant-system
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: rhcl-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+---
+kind: OperatorGroup
+apiVersion: operators.coreos.com/v1
+metadata:
+  name: kuadrant
+  namespace: kuadrant-system
+spec:
+  upgradeStrategy: Default
+EOF
+```
+
+Verify that the operator has been installed:
+
+```
+$ oc wait --for=jsonpath={.status.installPlanRef.name} subscription rhcl-operator --timeout=10s
+subscription.operators.coreos.com/rhcl-operator condition met
+$ ip=$(oc get subscription rhcl-operator -o=jsonpath={.status.installPlanRef.name})
+$ oc wait --for=condition=Installed installplan ${ip} --timeout=60s
+installplan.operators.coreos.com/install-gx75k condition met
+```
+Create your Connectivity Link custom resource (CR) by running the following command:
+
+```
+oc apply -f - <<EOF
+apiVersion: kuadrant.io/v1beta1
+kind: Kuadrant
+metadata:
+  name: kuadrant
+  namespace: kuadrant-system
+EOF
+```
+
+Finally, enable the console plugin for RHCL:
+
+```
+$ oc patch consoles.operator.openshift.io cluster \
+ --type=json \
+  -p '[{"op": "add", "path": "/spec/plugins/-", "value": "kuadrant-console-plugin"}]'
 ```
