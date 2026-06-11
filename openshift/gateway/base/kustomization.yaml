@@ -26,3 +26,5 @@ resources:
   - echo-route.yaml
   - status-route.yaml
   - water-usgs-route.yaml
+  - water-usgs-redirect-route.yaml
+

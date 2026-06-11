@@ -480,3 +480,45 @@ $ oc patch consoles.operator.openshift.io cluster \
  --type=json \
   -p '[{"op": "add", "path": "/spec/plugins/-", "value": "kuadrant-console-plugin"}]'
 ```
+
+### Redirect requests to HTTPS
+
+Let's add a HTTPRoute to redirect requests from HTTP to HTTPS on the USGS service.
+
+First, add a new port 80 listener to the existing Gateway object:
+
+```
+  listeners:
+  - name: http
+    hostname: "*.gateway.apps.CLUSTER_DOMAIN"
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https
+  ...
+```
+
+Edit the Gateway and apply the changes. Then, add a route for the HTTP traffic:
+
+```
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: water-usgs-http-redirect
+  namespace: gateway
+spec:
+  hostnames:
+  - water-usgs.gateway.apps.rosa.rosa-tgfk9.8un1.p3.openshiftapps.com
+  parentRefs:
+  - name: wildcard-gateway
+    namespace: openshift-ingress
+    sectionName: http
+  rules:
+  - filters:
+    - requestRedirect:
+        scheme: https
+        statusCode: 301
+      type: RequestRedirect
+```
